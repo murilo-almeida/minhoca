@@ -1,3 +1,11 @@
+//* This file is part of the MOOSE framework
+//* https://www.mooseframework.org
+//*
+//* All rights reserved, see COPYRIGHT for full restrictions
+//* https://github.com/idaholab/moose/blob/master/COPYRIGHT
+//*
+//* Licensed under LGPL 2.1, please see LICENSE for details
+//* https://www.gnu.org/licenses/lgpl-2.1.html
 #include "minhocaTestApp.h"
 #include "minhocaApp.h"
 #include "Moose.h"
@@ -5,35 +13,31 @@
 #include "MooseSyntax.h"
 #include "ModulesApp.h"
 
-template <>
 InputParameters
-validParams<minhocaTestApp>()
+minhocaTestApp::validParams()
 {
-  InputParameters params = validParams<minhocaApp>();
+  InputParameters params = minhocaApp::validParams();
   return params;
 }
 
 minhocaTestApp::minhocaTestApp(InputParameters parameters) : MooseApp(parameters)
 {
-  Moose::registerObjects(_factory);
-  ModulesApp::registerObjects(_factory);
-  minhocaApp::registerObjectDepends(_factory);
-  minhocaApp::registerObjects(_factory);
-
-  Moose::associateSyntax(_syntax, _action_factory);
-  ModulesApp::associateSyntax(_syntax, _action_factory);
-  minhocaApp::associateSyntaxDepends(_syntax, _action_factory);
-  minhocaApp::associateSyntax(_syntax, _action_factory);
-
-  bool use_test_objs = getParam<bool>("allow_test_objects");
-  if (use_test_objs)
-  {
-    minhocaTestApp::registerObjects(_factory);
-    minhocaTestApp::associateSyntax(_syntax, _action_factory);
-  }
+  minhocaTestApp::registerAll(
+      _factory, _action_factory, _syntax, getParam<bool>("allow_test_objects"));
 }
 
 minhocaTestApp::~minhocaTestApp() {}
+
+void
+minhocaTestApp::registerAll(Factory & f, ActionFactory & af, Syntax & s, bool use_test_objs)
+{
+  minhocaApp::registerAll(f, af, s);
+  if (use_test_objs)
+  {
+    Registry::registerObjectsTo(f, {"minhocaTestApp"});
+    Registry::registerActionsTo(af, {"minhocaTestApp"});
+  }
+}
 
 void
 minhocaTestApp::registerApps()
@@ -42,38 +46,17 @@ minhocaTestApp::registerApps()
   registerApp(minhocaTestApp);
 }
 
-void
-minhocaTestApp::registerObjects(Factory & /*factory*/)
-{
-  /* Uncomment Factory parameter and register your new test objects here! */
-}
-
-void
-minhocaTestApp::associateSyntax(Syntax & /*syntax*/, ActionFactory & /*action_factory*/)
-{
-  /* Uncomment Syntax and ActionFactory parameters and register your new test objects here! */
-}
-
 /***************************************************************************************************
  *********************** Dynamic Library Entry Points - DO NOT MODIFY ******************************
  **************************************************************************************************/
 // External entry point for dynamic application loading
 extern "C" void
+minhocaTestApp__registerAll(Factory & f, ActionFactory & af, Syntax & s)
+{
+  minhocaTestApp::registerAll(f, af, s);
+}
+extern "C" void
 minhocaTestApp__registerApps()
 {
   minhocaTestApp::registerApps();
-}
-
-// External entry point for dynamic object registration
-extern "C" void
-minhocaTestApp__registerObjects(Factory & factory)
-{
-  minhocaTestApp::registerObjects(factory);
-}
-
-// External entry point for dynamic syntax association
-extern "C" void
-minhocaTestApp__associateSyntax(Syntax & syntax, ActionFactory & action_factory)
-{
-  minhocaTestApp::associateSyntax(syntax, action_factory);
 }
